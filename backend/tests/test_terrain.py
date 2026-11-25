@@ -27,13 +27,44 @@ def test_flat_surface_derivatives():
     assert np.isclose(curv[3, 3], 0.0)
 
 
-def test_planar_slope_45_deg_east():
-    # Elevation decreases toward East (+x) by 30m per 30m cell => 45 deg slope facing East (90 deg)
+def test_planar_slope_all_8_orientations():
     y, x = np.mgrid[0:7, 0:7]
-    dem = 500.0 - 30.0 * x
-    slope, aspect = compute_slope_aspect_horn(dem, cell_size_m=30.0)
-    assert np.isclose(slope[3, 3], 45.0, atol=0.1)
-    assert np.isclose(aspect[3, 3], 270.0, atol=0.1) or np.isclose(aspect[3, 3], 90.0, atol=0.1)
+    # North-up raster: x increases East, y increases South
+    cases = [
+        (0, -1, 0.0),     # North-facing (elev decreases toward -y) -> Wait: elev = 500 + 30*y => dz_dy = +30 => downslope is -y (North, 0 deg)
+    ]
+    # Test all 8 downslope directions: (dx_coeff, dy_coeff, expected_aspect_deg)
+    # dem = 500 - 30*(dx_coeff*x + dy_coeff*y) => downslope vector is (dx_coeff, dy_coeff) in (East, South)
+    directions = [
+        (0.0, -1.0, 0.0),    # North
+        (1.0, -1.0, 45.0),   # NE
+        (1.0, 0.0, 90.0),    # East
+        (1.0, 1.0, 135.0),   # SE
+        (0.0, 1.0, 180.0),   # South
+        (-1.0, 1.0, 225.0),  # SW
+        (-1.0, 0.0, 270.0),  # West
+        (-1.0, -1.0, 315.0), # NW
+    ]
+    for dx_c, dy_c, expected_az in directions:
+        dem = 500.0 - 30.0 * (dx_c * x + dy_c * y)
+        slope, aspect = compute_slope_aspect_horn(dem, cell_size_m=30.0)
+        expected_slope = np.degrees(np.arctan(np.hypot(dx_c, dy_c)))
+        assert np.isclose(slope[3, 3], expected_slope, atol=0.1)
+        assert np.isclose(aspect[3, 3], expected_az, atol=0.1)
+
+
+def test_strict_real_data_mode_and_provenance():
+    from app.terrain.dem_provider import load_dem_patch
+
+    dem, meta = load_dem_patch(36.5, 32.2, strict_real_data=True)
+    assert dem is None
+    assert meta["source_type"] == "NO_TERRAIN_AVAILABLE"
+    assert meta["terrain_available"] is False
+
+    dem_syn, meta_syn = load_dem_patch(36.5, 32.2, strict_real_data=False)
+    assert dem_syn is not None
+    assert meta_syn["source_type"] == "SYNTHETIC_DEM"
+    assert meta_syn["is_synthetic"] is True
 
 
 def test_circular_mean_wraparound():

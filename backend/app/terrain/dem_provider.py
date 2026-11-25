@@ -16,11 +16,23 @@ def load_dem_patch(
     center_lon: float,
     radius_m: float = 3000.0,
     cell_size_m: float = 30.0,
-) -> tuple[np.ndarray, dict]:
+    strict_real_data: bool = False,
+) -> tuple[np.ndarray | None, dict]:
     """
     Return a metric DEM patch (meters) centered on (center_lat, center_lon).
-    Uses a deterministic topographic synthesis when local GeoTIFF tiles are not cached.
+    In strict_real_data mode, returns (None, NO_TERRAIN_AVAILABLE) instead of synthetic fallback.
     """
+    if strict_real_data:
+        return None, {
+            **COPERNICUS_GLO30_METADATA,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "cell_size_m": cell_size_m,
+            "source_type": "NO_TERRAIN_AVAILABLE",
+            "is_synthetic": False,
+            "terrain_available": False,
+        }
+
     half_cells = int(radius_m / cell_size_m) + 2
     size = 2 * half_cells + 1
     y_idx, x_idx = np.mgrid[0:size, 0:size]
@@ -38,6 +50,8 @@ def load_dem_patch(
         "center_lat": center_lat,
         "center_lon": center_lon,
         "cell_size_m": cell_size_m,
-        "source_mode": "synthetic_fallback",
+        "source_type": "SYNTHETIC_DEM",
+        "is_synthetic": True,
+        "terrain_available": True,
     }
     return dem, meta

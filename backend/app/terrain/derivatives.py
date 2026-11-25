@@ -26,8 +26,9 @@ def compute_slope_aspect_horn(
     grad = np.hypot(dz_dx, dz_dy)
     slope[1:-1, 1:-1] = np.degrees(np.arctan(grad))
 
-    # Geographic azimuth: 0=North, 90=East, 180=South, 270=West
-    az = np.degrees(np.arctan2(dz_dx, -dz_dy))
+    # Geographic downslope azimuth for north-up rasters (x=East, y=South):
+    # 0=North, 90=East, 180=South, 270=West
+    az = np.degrees(np.arctan2(-dz_dx, dz_dy))
     aspect[1:-1, 1:-1] = np.where(grad > 1e-9, (az + 360.0) % 360.0, np.nan)
     return slope, aspect
 

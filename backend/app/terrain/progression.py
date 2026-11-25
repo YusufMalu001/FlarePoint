@@ -64,6 +64,14 @@ def analyze_incident_progression(snapshots: Sequence[IncidentSnapshotModel]) -> 
             t_prev["center_point"]["slope_deg"],
             t_prev["center_point"]["aspect_deg"],
         )
+        quality_flags = ["SYNTHETIC_TERRAIN"]
+        if dist_km < 0.05:
+            quality_flags.append("MOVEMENT_BELOW_RESOLUTION")
+        if elapsed_h > 24.0:
+            quality_flags.append("LONG_OBSERVATION_GAP")
+        if (t_prev["center_point"]["slope_deg"] or 0.0) < 2.0:
+            quality_flags.append("FLAT_TERRAIN")
+
         transitions.append(
             {
                 "from_window": prev.window_start.isoformat(),
@@ -73,6 +81,7 @@ def analyze_incident_progression(snapshots: Sequence[IncidentSnapshotModel]) -> 
                 "elapsed_hours": round(elapsed_h, 1),
                 "elevation_delta_m": elev_delta,
                 "classification": cls,
+                "quality_flags": quality_flags,
             }
         )
 
