@@ -15,6 +15,7 @@ class FirmsAdapter:
         source: str | None = None,
         bbox: str | None = None,
         day_range: int = 2,
+        date: str | None = None,
     ) -> list[dict[str, str]]:
         if not settings.nasa_firms_map_key:
             raise ValueError("NASA_FIRMS_MAP_KEY is not configured.")
@@ -22,6 +23,8 @@ class FirmsAdapter:
         src = source or settings.nasa_firms_default_source
         area = bbox or settings.nasa_firms_default_bbox
         url = f"{self.BASE_URL}/{settings.nasa_firms_map_key}/{src}/{area}/{day_range}"
+        if date:
+            url = f"{url}/{date}"
 
         with httpx.Client(timeout=30.0) as client:
             resp = client.get(url)

@@ -1,0 +1,81 @@
+{
+  "firms_query": {
+    "source": "VIIRS_SNPP_SP",
+    "bbox": "-125,32,-114,42",
+    "day_range": 1,
+    "date": "2024-08-15"
+  },
+  "run_status": "COMPLETED",
+  "data_origin": "REAL_FIRMS",
+  "records_fetched": 204,
+  "records_valid": 204,
+  "records_invalid": 0,
+  "records_inserted": 204,
+  "incidents_clustered": 13,
+  "sample_incident_real_terrain": {
+    "incident_key": "FP-45590FB5",
+    "data_origin": "REAL_FIRMS",
+    "hotspot_count": 68,
+    "centroid": [
+      41.24632,
+      -123.46512
+    ],
+    "max_frp": 19.16,
+    "terrain_source_type": "REAL_DEM",
+    "terrain_is_synthetic": false,
+    "terrain_analysis_crs": "EPSG:32610",
+    "terrain_tile_ids": [
+      "Copernicus_DSM_COG_10_N41_00_W124_00_DEM"
+    ],
+    "terrain_center": {
+      "elevation_m": 1337.9,
+      "slope_deg": 32.13,
+      "aspect_deg": 313.04,
+      "tri_m": 16.35,
+      "tpi_m": -1.07,
+      "curvature_1_per_m": 0.003525
+    },
+    "terrain_multiscale": [
+      {
+        "scale_m": 250,
+        "elev_mean_m": 1365.9,
+        "elev_range_m": 272.9,
+        "slope_mean_deg": 31.43,
+        "slope_std_deg": 4.71,
+        "aspect_circ_mean_deg": 327.84,
+        "tri_mean_m": 16.52,
+        "tpi_mean_m": -0.19
+      },
+      {
+        "scale_m": 500,
+        "elev_mean_m": 1384.4,
+        "elev_range_m": 523.2,
+        "slope_mean_deg": 30.47,
+        "slope_std_deg": 6.31,
+        "aspect_circ_mean_deg": 346.41,
+        "tri_mean_m": 15.95,
+        "tpi_mean_m": 0.1
+      },
+      {
+        "scale_m": 1000,
+        "elev_mean_m": 1351.1,
+        "elev_range_m": 784.4,
+        "slope_mean_deg": 27.14,
+        "slope_std_deg": 8.11,
+        "aspect_circ_mean_deg": 347.05,
+        "tri_mean_m": 14.07,
+        "tpi_mean_m": 0.01
+      },
+      {
+        "scale_m": 3000,
+        "elev_mean_m": 1259.2,
+        "elev_range_m": 1269.4,
+        "slope_mean_deg": 26.9,
+        "slope_std_deg": 8.01,
+        "aspect_circ_mean_deg": 275.02,
+        "tri_mean_m": 13.96,
+        "tpi_mean_m": 0.02
+      }
+    ]
+  }
+}

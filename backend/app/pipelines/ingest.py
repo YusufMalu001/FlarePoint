@@ -17,6 +17,7 @@ def run_ingestion(
     source: str | None = None,
     bbox: str | None = None,
     day_range: int = 3,
+    date: str | None = None,
     force_demo: bool | None = None,
 ) -> IngestionRunModel:
     """
@@ -46,7 +47,9 @@ def run_ingestion(
         if use_demo:
             raw_rows = DemoAdapter().generate_observations(day_range=day_range)
         else:
-            raw_rows = FirmsAdapter().fetch_area_csv(source=src, bbox=area, day_range=day_range)
+            raw_rows = FirmsAdapter().fetch_area_csv(
+                source=src, bbox=area, day_range=day_range, date=date
+            )
 
         run.records_fetched = len(raw_rows)
         valid_count = 0
