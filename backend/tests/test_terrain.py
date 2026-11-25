@@ -54,9 +54,11 @@ def test_planar_slope_all_8_orientations():
 
 
 def test_strict_real_data_mode_and_provenance():
+    from unittest.mock import patch
     from app.terrain.dem_provider import load_dem_patch
 
-    dem, meta = load_dem_patch(36.5, 32.2, strict_real_data=True)
+    with patch("app.terrain.dem_provider.fetch_copernicus_tile", return_value=None):
+        dem, meta = load_dem_patch(36.5, 32.2, strict_real_data=True)
     assert dem is None
     assert meta["source_type"] == "NO_TERRAIN_AVAILABLE"
     assert meta["terrain_available"] is False

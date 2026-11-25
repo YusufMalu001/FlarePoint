@@ -60,3 +60,56 @@ export interface Snapshot {
   centroid_lat: number;
   centroid_lon: number;
 }
+
+export interface TerrainScale {
+  scale_m: number;
+  elev_mean_m: number;
+  elev_range_m: number;
+  slope_mean_deg: number | null;
+  slope_std_deg: number | null;
+  aspect_circ_mean_deg: number | null;
+  tri_mean_m: number | null;
+  tpi_mean_m: number | null;
+}
+
+export interface TerrainContext {
+  metadata: {
+    dataset: string;
+    source_type: "REAL_DEM" | "SYNTHETIC_DEM" | "NO_TERRAIN_AVAILABLE";
+    is_synthetic: boolean;
+    analysis_crs?: string;
+  };
+  center_point: {
+    elevation_m: number;
+    slope_deg: number | null;
+    aspect_deg: number | null;
+    tri_m: number | null;
+    tpi_m: number | null;
+    curvature_1_per_m: number | null;
+  } | null;
+  multiscale: TerrainScale[];
+}
+
+export interface ProgressionAnalysis {
+  label: string;
+  disclaimer: string;
+  transitions: {
+    from_window: string;
+    to_window: string;
+    displacement_km: number;
+    bearing_deg: number;
+    elapsed_hours: number;
+    elevation_delta_m: number | null;
+    classification: string;
+    quality_flags?: string[];
+  }[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  event_type: string;
+  entity_type: string;
+  entity_id: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}

@@ -16,6 +16,12 @@ COPERNICUS_GLO30_METADATA = {
 DEM_CACHE_DIR = Path("data/dem_cache")
 
 
+def local_utm_crs(lat: float, lon: float) -> str:
+    """Compute local metric UTM EPSG code from WGS84 (lat, lon)."""
+    zone = int((lon + 180.0) / 6.0) + 1
+    return f"EPSG:{32600 + zone if lat >= 0 else 32700 + zone}"
+
+
 def copernicus_tile_id(lat: float, lon: float) -> str:
     """
     Resolve 1x1 degree Copernicus DEM GLO-30 tile identifier for (lat, lon).
@@ -78,6 +84,82 @@ def fetch_copernicus_tile(tile_id: str, cache_dir: Path = DEM_CACHE_DIR, timeout
         return None
 
 
+def load_real_geotiff_patch(
+    tile_paths: list[Path],
+    center_lat: float,
+    center_lon: float,
+    radius_m: float = 3000.0,
+    cell_size_m: float = 30.0,
+) -> tuple[np.ndarray, dict] | None:
+    """
+    Load and mosaic real GeoTIFF tile(s) and reproject to local metric UTM CRS
+    using bilinear resampling. Returns (dem_array, metadata) or None on failure.
+    """
+    try:
+        import rasterio
+        from rasterio.merge import merge
+        from rasterio.transform import from_origin
+        from rasterio.warp import Resampling, reproject
+        from pyproj import Transformer
+    except ImportError:
+        return None
+
+    datasets = []
+    try:
+        for p in tile_paths:
+            datasets.append(rasterio.open(p))
+        if not datasets:
+            return None
+
+        mosaic, src_transform = merge(datasets)
+        src_crs = datasets[0].crs
+        src_nodata = datasets[0].nodata
+
+        dst_crs = local_utm_crs(center_lat, center_lon)
+        transformer = Transformer.from_crs("EPSG:4326", dst_crs, always_xy=True)
+        cx_m, cy_m = transformer.transform(center_lon, center_lat)
+
+        half_cells = int(radius_m / cell_size_m) + 2
+        size = 2 * half_cells + 1
+        dst_transform = from_origin(
+            cx_m - half_cells * cell_size_m,
+            cy_m + half_cells * cell_size_m,
+            cell_size_m,
+            cell_size_m,
+        )
+        dst_arr = np.full((size, size), np.nan, dtype=np.float32)
+
+        reproject(
+            source=mosaic[0].astype(np.float32),
+            destination=dst_arr,
+            src_transform=src_transform,
+            src_crs=src_crs,
+            src_nodata=src_nodata,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            dst_nodata=np.nan,
+            resampling=Resampling.bilinear,
+        )
+
+        meta = {
+            **COPERNICUS_GLO30_METADATA,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "analysis_crs": dst_crs,
+            "resampling_method": "bilinear",
+            "cell_size_m": cell_size_m,
+            "source_type": "REAL_DEM",
+            "is_synthetic": False,
+            "terrain_available": True,
+        }
+        return dst_arr.astype(float), meta
+    except Exception:
+        return None
+    finally:
+        for ds in datasets:
+            ds.close()
+
+
 def load_dem_patch(
     center_lat: float,
     center_lon: float,
@@ -87,16 +169,25 @@ def load_dem_patch(
 ) -> tuple[np.ndarray | None, dict]:
     """
     Return a metric DEM patch (meters) centered on (center_lat, center_lon).
-    In strict_real_data mode, returns (None, NO_TERRAIN_AVAILABLE) when real tiles
-    are not locally cached/available instead of silently falling back to synthetic data.
+    Attempts real cached/downloaded Copernicus tiles if strict_real_data=True;
+    returns (None, NO_TERRAIN_AVAILABLE) if unavailable in strict mode.
     """
     tile_ids = required_tiles_for_radius(center_lat, center_lon, radius_m)
+    dst_crs = local_utm_crs(center_lat, center_lon)
 
     if strict_real_data:
+        cached = [p for tid in tile_ids if (p := fetch_copernicus_tile(tid)) is not None]
+        if cached:
+            real_res = load_real_geotiff_patch(cached, center_lat, center_lon, radius_m, cell_size_m)
+            if real_res is not None:
+                arr, meta = real_res
+                meta["tile_ids"] = tile_ids
+                return arr, meta
         return None, {
             **COPERNICUS_GLO30_METADATA,
             "center_lat": center_lat,
             "center_lon": center_lon,
+            "analysis_crs": dst_crs,
             "cell_size_m": cell_size_m,
             "tile_ids": tile_ids,
             "source_type": "NO_TERRAIN_AVAILABLE",
@@ -119,6 +210,8 @@ def load_dem_patch(
         **COPERNICUS_GLO30_METADATA,
         "center_lat": center_lat,
         "center_lon": center_lon,
+        "analysis_crs": dst_crs,
+        "resampling_method": "none_synthetic_grid",
         "cell_size_m": cell_size_m,
         "tile_ids": tile_ids,
         "source_type": "SYNTHETIC_DEM",

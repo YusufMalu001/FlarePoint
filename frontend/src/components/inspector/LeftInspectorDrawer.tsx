@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Incident, Observation, Snapshot } from "@/types/flarepoint";
+import { Incident, Observation, ProgressionAnalysis, Snapshot, TerrainContext } from "@/types/flarepoint";
 
 interface LeftInspectorDrawerProps {
   incidents: Incident[];
@@ -21,6 +21,8 @@ interface LeftInspectorDrawerProps {
   onSelectIncident: (inc: Incident) => void;
   observations: Observation[];
   timeline: Snapshot[];
+  terrain: TerrainContext | null;
+  progression: ProgressionAnalysis | null;
   highlightLatest: boolean;
   onToggleHighlightLatest: () => void;
 }
@@ -34,7 +36,7 @@ const LAND_COVER_COLORS: Record<string, string> = {
   Bare: "#94a3b8",
 };
 
-type TabId = "land_cover" | "frp" | "timeline" | "weather" | "hotspots";
+type TabId = "land_cover" | "frp" | "timeline" | "weather" | "hotspots" | "terrain" | "progression";
 
 export function LeftInspectorDrawer({
   incidents,
@@ -42,6 +44,8 @@ export function LeftInspectorDrawer({
   onSelectIncident,
   observations,
   timeline,
+  terrain,
+  progression,
   highlightLatest,
   onToggleHighlightLatest,
 }: LeftInspectorDrawerProps) {
@@ -188,6 +192,8 @@ export function LeftInspectorDrawer({
           { id: "weather" as const, label: "Weather" },
           { id: "hotspots" as const, label: "Hotspots" },
           { id: "frp" as const, label: "Fire Radiative Power" },
+          { id: "terrain" as const, label: "Terrain Morphology" },
+          { id: "progression" as const, label: "Centroid Progression" },
           { id: "land_cover" as const, label: "Land Cover Distribution", span: true },
         ].map((tab) => (
           <button
@@ -327,11 +333,60 @@ export function LeftInspectorDrawer({
                   className="flex justify-between items-center bg-[#112128] px-2 py-1 rounded text-[10px] font-mono"
                 >
                   <span>{new Date(o.acq_timestamp).toISOString().slice(5, 16).replace("T", " ")}</span>
-                  <span className="text-amber-300">{o.frp.toFixed(1)} MW</span>
+                  <span className="text-amber-300">{(o.frp ?? 0).toFixed(1)} MW</span>
                   <span className="text-slate-400">{o.satellite}</span>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === "terrain" && (
+          <div className="space-y-2 text-[10px]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-200">Terrain Context</span>
+              {terrain && (
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/40 font-mono">
+                  {terrain.metadata.source_type}
+                </span>
+              )}
+            </div>
+            {terrain?.center_point ? (
+              <>
+                <div className="grid grid-cols-3 gap-1.5 bg-[#112128] p-2 rounded border border-[#1c333c]">
+                  <div><span className="text-slate-400">Elev:</span> {terrain.center_point.elevation_m} m</div>
+                  <div><span className="text-slate-400">Slope:</span> {terrain.center_point.slope_deg ?? "N/A"}°</div>
+                  <div><span className="text-slate-400">TRI:</span> {terrain.center_point.tri_m ?? "N/A"} m</div>
+                </div>
+                <div className="space-y-1">
+                  {terrain.multiscale.map((s) => (
+                    <div key={s.scale_m} className="flex justify-between bg-[#081216] px-2 py-1 rounded font-mono">
+                      <span>{s.scale_m}m</span>
+                      <span>Elev {s.elev_mean_m}m</span>
+                      <span>Slope {s.slope_mean_deg ?? "-"}°</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-slate-400">Terrain unavailable.</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "progression" && (
+          <div className="space-y-2 text-[10px]">
+            <div className="text-xs font-semibold text-slate-200">Observed Centroid Displacement</div>
+            <div className="max-h-32 overflow-y-auto space-y-1 pr-1">
+              {progression?.transitions.map((t, i) => (
+                <div key={i} className="bg-[#112128] px-2 py-1 rounded flex justify-between font-mono">
+                  <span>{t.displacement_km} km</span>
+                  <span className="text-teal-300">{t.classification}</span>
+                  <span>{t.elevation_delta_m ?? 0} m</span>
+                </div>
+              ))}
+            </div>
+            {progression && <p className="text-slate-500 leading-tight">{progression.disclaimer}</p>}
           </div>
         )}
       </div>

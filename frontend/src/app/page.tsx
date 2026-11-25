@@ -6,14 +6,32 @@ import { LeftIconRail } from "@/components/layout/LeftIconRail";
 import { LeftInspectorDrawer } from "@/components/inspector/LeftInspectorDrawer";
 import { MapViewport } from "@/components/map/MapViewport";
 import { LayersPanel, BaseMapId } from "@/components/layers/LayersPanel";
-import { fetchIncidents, fetchObservations, fetchTimeline, triggerIngest } from "@/lib/api";
-import { Incident, Observation, Snapshot } from "@/types/flarepoint";
+import {
+  fetchAuditLogs,
+  fetchIncidents,
+  fetchObservations,
+  fetchProgression,
+  fetchTerrain,
+  fetchTimeline,
+  triggerIngest,
+} from "@/lib/api";
+import {
+  AuditLogEntry,
+  Incident,
+  Observation,
+  ProgressionAnalysis,
+  Snapshot,
+  TerrainContext,
+} from "@/types/flarepoint";
 
 export default function FlarePointPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [observations, setObservations] = useState<Observation[]>([]);
   const [timeline, setTimeline] = useState<Snapshot[]>([]);
+  const [terrain, setTerrain] = useState<TerrainContext | null>(null);
+  const [progression, setProgression] = useState<ProgressionAnalysis | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [activeSection, setActiveSection] = useState<"map" | "analytics" | "alerts" | "audit">("map");
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,7 +65,15 @@ export default function FlarePointPage() {
     if (!selectedIncident) return;
     fetchObservations(selectedIncident.id).then(setObservations).catch(console.error);
     fetchTimeline(selectedIncident.id).then(setTimeline).catch(console.error);
+    fetchTerrain(selectedIncident.id).then(setTerrain).catch(console.error);
+    fetchProgression(selectedIncident.id).then(setProgression).catch(console.error);
   }, [selectedIncident?.id]);
+
+  useEffect(() => {
+    if (activeSection === "audit") {
+      fetchAuditLogs().then(setAuditLogs).catch(console.error);
+    }
+  }, [activeSection]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -99,9 +125,51 @@ export default function FlarePointPage() {
           onSelectIncident={setSelectedIncident}
           observations={observations}
           timeline={timeline}
+          terrain={terrain}
+          progression={progression}
           highlightLatest={highlightLatest}
           onToggleHighlightLatest={() => setHighlightLatest(!highlightLatest)}
         />
+
+        {activeSection === "alerts" && (
+          <div className="w-72 bg-[#0c181d] border-r border-[#1c333c] p-3 text-xs overflow-y-auto shrink-0">
+            <div className="font-semibold text-slate-100 mb-2">Rule-Derived Priority Queue</div>
+            <div className="space-y-2">
+              {incidents.map((inc) => (
+                <button
+                  key={inc.id}
+                  onClick={() => {
+                    setSelectedIncident(inc);
+                    setActiveSection("map");
+                  }}
+                  className="w-full text-left p-2 rounded bg-[#112128] border border-[#1c333c] hover:border-teal-400"
+                >
+                  <div className="flex justify-between font-mono">
+                    <span className="text-slate-100">{inc.persistent_key}</span>
+                    <span className="text-amber-300">{inc.priority_tier} ({inc.priority_score})</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    {inc.hotspot_count} hotspots • Max FRP {inc.max_frp} MW
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeSection === "audit" && (
+          <div className="w-80 bg-[#0c181d] border-r border-[#1c333c] p-3 text-xs overflow-y-auto shrink-0">
+            <div className="font-semibold text-slate-100 mb-2">Provenance & Audit Trail</div>
+            <div className="space-y-1.5">
+              {auditLogs.map((log) => (
+                <div key={log.id} className="p-2 rounded bg-[#112128] border border-[#1c333c] text-[10px]">
+                  <div className="font-mono text-teal-300">{log.event_type}</div>
+                  <div className="text-slate-400">{new Date(log.created_at).toISOString()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <MapViewport
           incidents={filteredIncidents}
