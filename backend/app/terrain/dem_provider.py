@@ -113,7 +113,12 @@ def load_real_geotiff_patch(
         if not datasets:
             return None
 
-        mosaic, src_transform = merge(datasets)
+        dlat = (radius_m + 500.0) / 111320.0
+        dlon = (radius_m + 500.0) / (111320.0 * max(0.1, math.cos(math.radians(center_lat))))
+        mosaic, src_transform = merge(
+            datasets,
+            bounds=(center_lon - dlon, center_lat - dlat, center_lon + dlon, center_lat + dlat),
+        )
         src_crs = datasets[0].crs
         src_nodata = datasets[0].nodata
 

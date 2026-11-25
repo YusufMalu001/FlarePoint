@@ -1,0 +1,11 @@
+{
+  "retrieved_at": "2026-11-25T08:24:24.507159+00:00",
+  "firms_source": "VIIRS_SNPP_SP",
+  "dem_source": "Copernicus DEM GLO-30",
+  "raw_fetched": 3294,
+  "invalid_records": 0,
+  "deduplicated_in_bbox": 3294,
+  "unique_incidents": 11,
+  "grid_cells_valid_land": 293,
+  "random_seed": 42
+}

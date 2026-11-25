@@ -1,0 +1,56 @@
+{
+  "study_window": "2024-08-01 to 2024-08-20",
+  "total_grid_cells": 293,
+  "cells_with_detections": 19,
+  "total_detections": 3294,
+  "unique_incidents": 11,
+  "tests": {
+    "H1_elevation_kruskal": {
+      "test": "kruskal_wallis",
+      "statistic": 16.9609,
+      "p_value": 0.009428119715054062,
+      "epsilon_squared": 0.0383,
+      "n_total": 293,
+      "groups": 7
+    },
+    "H2_slope_kruskal": {
+      "test": "kruskal_wallis",
+      "statistic": 5.5723,
+      "p_value": 0.13437627894576024,
+      "epsilon_squared": 0.0089,
+      "n_total": 293,
+      "groups": 4
+    },
+    "H3_aspect_kruskal_sloped_only": {
+      "test": "kruskal_wallis",
+      "statistic": 6.2624,
+      "p_value": 0.5094634778739732,
+      "epsilon_squared": 0.0,
+      "n_total": 216,
+      "groups": 8
+    },
+    "H4_tri_spearman": {
+      "rho": -0.0957,
+      "p_value": 0.10193947853649897
+    },
+    "H5_tri_3000m_spearman": {
+      "rho": -0.0955,
+      "p_value": 0.10296710283848363
+    }
+  },
+  "fdr_adjusted_p_values": [
+    0.047141,
+    0.16797,
+    0.509463,
+    0.16797,
+    0.16797
+  ],
+  "sensitivity_high_conf_elevation": {
+    "test": "kruskal_wallis",
+    "statistic": 14.4747,
+    "p_value": 0.02476065705410481,
+    "epsilon_squared": 0.0296,
+    "n_total": 293,
+    "groups": 7
+  }
+}
