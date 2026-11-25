@@ -15,6 +15,9 @@ from app.api.schemas import (
 )
 from app.core.config import settings
 from app.pipelines.ingest import run_ingestion
+from app.terrain.dem_provider import COPERNICUS_GLO30_METADATA
+from app.terrain.extractor import extract_multiscale_terrain
+from app.terrain.progression import analyze_incident_progression
 from app.storage.database import get_db
 from app.storage.models import (
     AuditLogModel,
@@ -175,6 +178,32 @@ def get_incident_timeline(incident_id: str, db: Session = Depends(get_db)):
         .order_by(IncidentSnapshotModel.window_start.asc())
         .all()
     )
+
+
+@router.get("/terrain/sources")
+def get_terrain_sources():
+    return COPERNICUS_GLO30_METADATA
+
+
+@router.get("/incidents/{incident_id}/terrain")
+def get_incident_terrain(incident_id: str, db: Session = Depends(get_db)):
+    inc = db.query(IncidentModel).filter_by(id=incident_id).first()
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return extract_multiscale_terrain(inc.centroid_lat, inc.centroid_lon)
+
+
+@router.get("/incidents/{incident_id}/progression")
+def get_incident_progression(incident_id: str, db: Session = Depends(get_db)):
+    snaps = (
+        db.query(IncidentSnapshotModel)
+        .filter_by(incident_id=incident_id)
+        .order_by(IncidentSnapshotModel.window_start.asc())
+        .all()
+    )
+    if not snaps:
+        raise HTTPException(status_code=404, detail="Incident snapshots not found")
+    return analyze_incident_progression(snaps)
 
 
 @router.get("/audit")

@@ -51,7 +51,9 @@ def test_idempotency_and_api_filtering():
         assert sources.status_code == 200
         assert len(sources.json()["sources"]) == 3
 
-        # Triggering demo ingest again should be idempotent (0 new inserts)
+        # Triggering demo ingest twice in a row should be idempotent
+        r1 = client.post("/api/v1/ingest/run", json={"day_range": 3, "force_demo": True})
+        assert r1.status_code == 200
         r2 = client.post("/api/v1/ingest/run", json={"day_range": 3, "force_demo": True})
         assert r2.status_code == 200
         assert r2.json()["records_duplicate"] > 0
