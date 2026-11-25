@@ -24,22 +24,36 @@ class PriorityTier(str, Enum):
 
 @dataclass
 class RawObservation:
-    """Normalized satellite fire detection prior to persistence."""
+    """Canonical normalized satellite fire observation prior to persistence."""
 
     source_sensor: str
     satellite: str
+    instrument: str
     latitude: float
     longitude: float
+    acq_date: str
+    acq_time: str
     acq_timestamp: datetime
-    brightness: float
-    frp: float
-    confidence_raw: str
-    confidence_norm: float
-    daynight: str
+    confidence_raw: str | None
+    confidence_norm: float | None
+    brightness: float | None
+    frp: float | None
+    scan: float | None
+    track: float | None
+    daynight: str | None
+    version: str | None
     data_origin: DataOrigin
     dedup_hash: str
-    scan: float | None = None
-    track: float | None = None
+    raw_payload: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ValidationResult:
+    """Explicit validation outcome for a single parsed observation record."""
+
+    is_valid: bool
+    observation: RawObservation | None = None
+    errors: list[str] = field(default_factory=list)
 
 
 @dataclass

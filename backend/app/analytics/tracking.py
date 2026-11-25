@@ -41,9 +41,11 @@ def process_incidents(db: Session) -> list[IncidentModel]:
         c_lon = sum(o.longitude for o in obs_list) / len(obs_list)
         first_seen = min(o.acq_timestamp for o in obs_list)
         last_seen = max(o.acq_timestamp for o in obs_list)
-        max_frp = max(o.frp for o in obs_list)
-        mean_frp = sum(o.frp for o in obs_list) / len(obs_list)
-        mean_conf = sum(o.confidence_norm for o in obs_list) / len(obs_list)
+        frp_vals = [o.frp for o in obs_list if o.frp is not None]
+        conf_vals = [o.confidence_norm for o in obs_list if o.confidence_norm is not None]
+        max_frp = max(frp_vals) if frp_vals else 0.0
+        mean_frp = (sum(frp_vals) / len(frp_vals)) if frp_vals else 0.0
+        mean_conf = (sum(conf_vals) / len(conf_vals)) if conf_vals else 0.5
         footprint, area_km2 = compute_footprint(obs_list)
         origin = obs_list[0].data_origin
 
@@ -126,14 +128,15 @@ def process_incidents(db: Session) -> list[IncidentModel]:
                 win_obs = [o for o in obs_list if cur <= o.acq_timestamp < win_end]
                 if win_obs:
                     _, win_area = compute_footprint(win_obs)
+                    w_frps = [o.frp for o in win_obs if o.frp is not None]
                     db.add(
                         IncidentSnapshotModel(
                             incident_id=matched.id,
                             window_start=cur,
                             window_end=win_end,
                             hotspot_count=len(win_obs),
-                            max_frp=round(max(o.frp for o in win_obs), 2),
-                            mean_frp=round(sum(o.frp for o in win_obs) / len(win_obs), 2),
+                            max_frp=round(max(w_frps), 2) if w_frps else 0.0,
+                            mean_frp=round(sum(w_frps) / len(w_frps), 2) if w_frps else 0.0,
                             affected_area_km2=win_area,
                             centroid_lat=sum(o.latitude for o in win_obs) / len(win_obs),
                             centroid_lon=sum(o.longitude for o in win_obs) / len(win_obs),

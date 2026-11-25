@@ -22,8 +22,29 @@ class IngestResponse(BaseModel):
     status: str
     data_origin: str
     records_fetched: int
+    records_valid: int
+    records_invalid: int
+    records_duplicate: int
     records_inserted: int
     incidents_active: int
+
+
+class IngestionStatusOut(BaseModel):
+    id: str
+    source: str
+    area_bbox: str
+    started_at: datetime
+    completed_at: datetime | None
+    status: str
+    records_fetched: int
+    records_valid: int
+    records_invalid: int
+    records_duplicate: int
+    records_inserted: int
+    data_origin: str
+    error_message: str | None
+
+    model_config = {"from_attributes": True}
 
 
 class IncidentSummary(BaseModel):
@@ -54,17 +75,31 @@ class ObservationOut(BaseModel):
     id: str
     source_sensor: str
     satellite: str
+    instrument: str
+    acq_date: str
+    acq_time: str
     acq_timestamp: datetime
     latitude: float
     longitude: float
-    brightness: float
-    frp: float
-    confidence_raw: str
-    confidence_norm: float
-    daynight: str
+    brightness: float | None
+    frp: float | None
+    confidence_raw: str | None
+    confidence_norm: float | None
+    scan: float | None
+    track: float | None
+    daynight: str | None
+    version: str | None
+    ingested_at: datetime
     data_origin: str
 
     model_config = {"from_attributes": True}
+
+
+class PaginatedObservations(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    items: list[ObservationOut]
 
 
 class SnapshotOut(BaseModel):

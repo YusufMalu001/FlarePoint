@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.analytics.tracking import process_incidents
@@ -7,7 +8,9 @@ from app.api.schemas import (
     IncidentSummary,
     IngestRequest,
     IngestResponse,
+    IngestionStatusOut,
     ObservationOut,
+    PaginatedObservations,
     SnapshotOut,
 )
 from app.core.config import settings
@@ -18,6 +21,7 @@ from app.storage.models import (
     IncidentModel,
     IncidentObservationModel,
     IncidentSnapshotModel,
+    IngestionRunModel,
     ObservationModel,
 )
 
@@ -35,8 +39,43 @@ def health(db: Session = Depends(get_db)):
     )
 
 
+@router.get("/sources")
+def list_sources():
+    """Data-source metadata and NASA FIRMS access documentation."""
+    return {
+        "active_mode": "SIMULATED_DEMO"
+        if (settings.demo_mode or not settings.nasa_firms_map_key)
+        else "REAL_FIRMS",
+        "sources": [
+            {
+                "id": "VIIRS_SNPP_NRT",
+                "instrument": "VIIRS",
+                "satellite": "Suomi-NPP",
+                "format": "CSV",
+                "rate_limit": "5000 transactions / 10 min per MAP_KEY",
+            },
+            {
+                "id": "VIIRS_NOAA20_NRT",
+                "instrument": "VIIRS",
+                "satellite": "NOAA-20",
+                "format": "CSV",
+                "rate_limit": "5000 transactions / 10 min per MAP_KEY",
+            },
+            {
+                "id": "MODIS_NRT",
+                "instrument": "MODIS",
+                "satellite": "Terra & Aqua",
+                "format": "CSV",
+                "rate_limit": "5000 transactions / 10 min per MAP_KEY",
+            },
+        ],
+    }
+
+
 @router.post("/ingest/run", response_model=IngestResponse)
 def trigger_ingest(req: IngestRequest, db: Session = Depends(get_db)):
+    if not (1 <= req.day_range <= 5):
+        raise HTTPException(status_code=422, detail="day_range must be between 1 and 5")
     run = run_ingestion(
         db,
         source=req.source,
@@ -50,9 +89,58 @@ def trigger_ingest(req: IngestRequest, db: Session = Depends(get_db)):
         status=run.status,
         data_origin=run.data_origin,
         records_fetched=run.records_fetched,
+        records_valid=run.records_valid,
+        records_invalid=run.records_invalid,
+        records_duplicate=run.records_duplicate,
         records_inserted=run.records_inserted,
         incidents_active=len(incidents),
     )
+
+
+@router.get("/ingest/status", response_model=list[IngestionStatusOut])
+def ingestion_status(limit: int = Query(10, ge=1, le=100), db: Session = Depends(get_db)):
+    return (
+        db.query(IngestionRunModel)
+        .order_by(IngestionRunModel.started_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+@router.get("/observations", response_model=PaginatedObservations)
+def list_observations(
+    bbox: str | None = Query(None, description="west,south,east,north"),
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+    data_origin: str | None = Query(None, pattern="^(REAL_FIRMS|SIMULATED_DEMO)$"),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    q = db.query(ObservationModel)
+    if bbox:
+        try:
+            w, s, e, n = [float(x) for x in bbox.split(",")]
+            if w > e or s > n:
+                raise ValueError("Invalid bbox ordering")
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid bbox format; expected west,south,east,north")
+        q = q.filter(
+            ObservationModel.longitude >= w,
+            ObservationModel.longitude <= e,
+            ObservationModel.latitude >= s,
+            ObservationModel.latitude <= n,
+        )
+    if start_time:
+        q = q.filter(ObservationModel.acq_timestamp >= start_time)
+    if end_time:
+        q = q.filter(ObservationModel.acq_timestamp <= end_time)
+    if data_origin:
+        q = q.filter(ObservationModel.data_origin == data_origin)
+
+    total = q.count()
+    items = q.order_by(ObservationModel.acq_timestamp.desc()).offset(offset).limit(limit).all()
+    return PaginatedObservations(total=total, limit=limit, offset=offset, items=items)
 
 
 @router.get("/incidents", response_model=list[IncidentSummary])
@@ -70,14 +158,13 @@ def get_incident(incident_id: str, db: Session = Depends(get_db)):
 
 @router.get("/incidents/{incident_id}/observations", response_model=list[ObservationOut])
 def get_incident_observations(incident_id: str, db: Session = Depends(get_db)):
-    obs = (
+    return (
         db.query(ObservationModel)
         .join(IncidentObservationModel, IncidentObservationModel.observation_id == ObservationModel.id)
         .filter(IncidentObservationModel.incident_id == incident_id)
         .order_by(ObservationModel.acq_timestamp.desc())
         .all()
     )
-    return obs
 
 
 @router.get("/incidents/{incident_id}/timeline", response_model=list[SnapshotOut])
@@ -91,13 +178,8 @@ def get_incident_timeline(incident_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/audit")
-def list_audit_logs(limit: int = 50, db: Session = Depends(get_db)):
-    logs = (
-        db.query(AuditLogModel)
-        .order_by(AuditLogModel.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+def list_audit_logs(limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db)):
+    logs = db.query(AuditLogModel).order_by(AuditLogModel.created_at.desc()).limit(limit).all()
     return [
         {
             "id": l.id,

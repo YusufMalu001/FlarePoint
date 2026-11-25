@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.storage.database import Base
@@ -21,6 +21,9 @@ class IngestionRunModel(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="RUNNING")
     records_fetched: Mapped[int] = mapped_column(Integer, default=0)
+    records_valid: Mapped[int] = mapped_column(Integer, default=0)
+    records_invalid: Mapped[int] = mapped_column(Integer, default=0)
+    records_duplicate: Mapped[int] = mapped_column(Integer, default=0)
     records_inserted: Mapped[int] = mapped_column(Integer, default=0)
     data_origin: Mapped[str] = mapped_column(String(32), nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -28,19 +31,33 @@ class IngestionRunModel(Base):
 
 class ObservationModel(Base):
     __tablename__ = "observations"
+    __table_args__ = (
+        # Composite spatial-temporal index for bbox + time-window queries
+        Index("ix_observations_lat_lon_ts", "latitude", "longitude", "acq_timestamp"),
+        # Provenance index for separating REAL_FIRMS vs SIMULATED_DEMO
+        Index("ix_observations_origin_ts", "data_origin", "acq_timestamp"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     ingestion_run_id: Mapped[str] = mapped_column(ForeignKey("ingestion_runs.id"), nullable=False)
     source_sensor: Mapped[str] = mapped_column(String(64), nullable=False)
     satellite: Mapped[str] = mapped_column(String(32), nullable=False)
+    instrument: Mapped[str] = mapped_column(String(32), nullable=False, default="VIIRS")
+    acq_date: Mapped[str] = mapped_column(String(16), nullable=False)
+    acq_time: Mapped[str] = mapped_column(String(8), nullable=False)
     acq_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
-    brightness: Mapped[float] = mapped_column(Float, nullable=False)
-    frp: Mapped[float] = mapped_column(Float, nullable=False)
-    confidence_raw: Mapped[str] = mapped_column(String(16), nullable=False)
-    confidence_norm: Mapped[float] = mapped_column(Float, nullable=False)
-    daynight: Mapped[str] = mapped_column(String(4), nullable=False)
+    brightness: Mapped[float | None] = mapped_column(Float, nullable=True)
+    frp: Mapped[float | None] = mapped_column(Float, nullable=True)
+    confidence_raw: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    confidence_norm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    scan: Mapped[float | None] = mapped_column(Float, nullable=True)
+    track: Mapped[float | None] = mapped_column(Float, nullable=True)
+    daynight: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    raw_payload: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     dedup_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(32), nullable=False)
 
