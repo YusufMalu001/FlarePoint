@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-11-25T04:44:42.088128+00:00",
+  "experiments": [
+    {
+      "persistent_key": "FP-AC65C986",
+      "data_origin": "SIMULATED_DEMO",
+      "windows": 12,
+      "anomalies_detected": 2,
+      "forecast_next_6h": 4.4,
+      "interval_90": [
+        2.67,
+        6.13
+      ],
+      "model_mae": 1.113,
+      "baseline_mae": 2.0,
+      "interval_coverage": 0.667
+    },
+    {
+      "persistent_key": "FP-FB1B9E34",
+      "data_origin": "SIMULATED_DEMO",
+      "windows": 12,
+      "anomalies_detected": 2,
+      "forecast_next_6h": 1.66,
+      "interval_90": [
+        0.0,
+        4.78
+      ],
+      "model_mae": 1.947,
+      "baseline_mae": 3.0,
+      "interval_coverage": 0.667
+    },
+    {
+      "persistent_key": "FP-D2EAEC14",
+      "data_origin": "SIMULATED_DEMO",
+      "windows": 11,
+      "anomalies_detected": 1,
+      "forecast_next_6h": 2.92,
+      "interval_90": [
+        2.04,
+        3.8
+      ],
+      "model_mae": 0.78,
+      "baseline_mae": 1.333,
+      "interval_coverage": 0.667
+    }
+  ]
+}
