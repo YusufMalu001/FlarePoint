@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     nasa_firms_default_source: str = "VIIRS_SNPP_NRT"
     nasa_firms_default_bbox: str = "-180,-90,180,90"
     log_level: str = "INFO"
+    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # Clustering defaults (Stage 1 & 2)
     dbscan_eps_km: float = 5.0

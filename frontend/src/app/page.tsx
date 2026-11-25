@@ -17,6 +17,7 @@ export default function FlarePointPage() {
   const [activeSection, setActiveSection] = useState<"map" | "analytics" | "alerts" | "audit">("map");
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Layer states
   const [baseMap, setBaseMap] = useState<BaseMapId>("satellite");
@@ -27,13 +28,14 @@ export default function FlarePointPage() {
 
   const loadIncidents = useCallback(async () => {
     try {
+      setErrorMsg(null);
       const data = await fetchIncidents();
       setIncidents(data);
       if (data.length > 0 && !selectedIncident) {
         setSelectedIncident(data[0]);
       }
     } catch (err) {
-      console.error("Failed to load incidents:", err);
+      setErrorMsg(err instanceof Error ? err.message : "Failed to reach FlarePoint API");
     }
   }, [selectedIncident]);
 
@@ -78,6 +80,15 @@ export default function FlarePointPage() {
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
       />
+
+      {errorMsg && (
+        <div className="bg-red-950/90 border-b border-red-500/50 px-4 py-1.5 text-xs text-red-200 flex items-center justify-between">
+          <span>API Error: {errorMsg}</span>
+          <button onClick={() => setErrorMsg(null)} className="underline text-red-300">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 flex min-h-0">
         <LeftIconRail activeSection={activeSection} onSelectSection={setActiveSection} />
