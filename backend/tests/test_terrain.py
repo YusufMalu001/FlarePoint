@@ -101,6 +101,17 @@ def test_hand_calculated_tri_tpi_curvature_and_nonsquare():
     assert np.isclose(aspect_ns[2, 2], 180.0, atol=0.1)
 
 
+def test_tile_resolution_and_multitile_boundaries():
+    from app.terrain.dem_provider import copernicus_tile_id, required_tiles_for_radius
+
+    assert copernicus_tile_id(36.48989, 32.22333) == "Copernicus_DSM_COG_10_N36_00_E032_00_DEM"
+    assert copernicus_tile_id(-33.85, -120.5) == "Copernicus_DSM_COG_10_S34_00_W121_00_DEM"
+
+    # Point near tile corner (37.001, 32.001) with 3km radius must span multiple tiles
+    tiles = required_tiles_for_radius(37.001, 32.001, radius_m=3000.0)
+    assert len(tiles) >= 2
+
+
 def test_terrain_api_endpoints():
     with TestClient(app) as client:
         src = client.get("/api/v1/terrain/sources")
