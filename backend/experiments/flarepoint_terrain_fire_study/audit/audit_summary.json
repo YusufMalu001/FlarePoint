@@ -1,0 +1,118 @@
+{
+  "concentration": {
+    "active_cells": 19,
+    "total_cells": 293,
+    "top1_share": 0.401,
+    "top3_share": 0.7378
+  },
+  "morans_i_detections": {
+    "morans_i": 0.184,
+    "p_perm": 0.002,
+    "n": 293,
+    "weight_dist_m": 25000.0
+  },
+  "morans_i_elevation": {
+    "morans_i": 0.6425,
+    "p_perm": 0.002,
+    "n": 293,
+    "weight_dist_m": 25000.0
+  },
+  "availability": [
+    {
+      "elev_class": "0-250m",
+      "cells": 39,
+      "area_km2": 8775.0,
+      "detections": 20,
+      "density_per_100km2": 0.23
+    },
+    {
+      "elev_class": "250-500m",
+      "cells": 39,
+      "area_km2": 8775.0,
+      "detections": 1,
+      "density_per_100km2": 0.01
+    },
+    {
+      "elev_class": "500-750m",
+      "cells": 39,
+      "area_km2": 8775.0,
+      "detections": 351,
+      "density_per_100km2": 4.0
+    },
+    {
+      "elev_class": "750-1000m",
+      "cells": 40,
+      "area_km2": 9000.0,
+      "detections": 0,
+      "density_per_100km2": 0.0
+    },
+    {
+      "elev_class": "1000-1500m",
+      "cells": 81,
+      "area_km2": 18225.0,
+      "detections": 1637,
+      "density_per_100km2": 8.98
+    },
+    {
+      "elev_class": "1500-2000m",
+      "cells": 48,
+      "area_km2": 10800.0,
+      "detections": 1283,
+      "density_per_100km2": 11.88
+    },
+    {
+      "elev_class": "2000m+",
+      "cells": 7,
+      "area_km2": 1575.0,
+      "detections": 0,
+      "density_per_100km2": 0.0
+    }
+  ],
+  "robustness": [
+    {
+      "analysis": "1_original_h1_15km_7classes",
+      "unit": "15km_grid_cell",
+      "n": 293,
+      "test": "Kruskal-Wallis",
+      "statistic": 16.9609,
+      "p_value": 0.009428,
+      "effect_size": 0.0383
+    },
+    {
+      "analysis": "2_high_nominal_conf_15km",
+      "unit": "15km_grid_cell",
+      "n": 293,
+      "test": "Kruskal-Wallis",
+      "statistic": 14.4747,
+      "p_value": 0.024761,
+      "effect_size": 0.0296
+    },
+    {
+      "analysis": "3_presence_absence_mann_whitney",
+      "unit": "15km_grid_cell",
+      "n": 293,
+      "test": "Mann-Whitney U",
+      "statistic": 1958.0,
+      "p_value": 0.071133,
+      "effect_size": 0.2478
+    },
+    {
+      "analysis": "4_coarse_4_elev_bands",
+      "unit": "15km_grid_cell",
+      "n": 293,
+      "test": "Kruskal-Wallis",
+      "statistic": 3.645,
+      "p_value": 0.302433,
+      "effect_size": 0.0022
+    },
+    {
+      "analysis": "5_spatial_blocks_30km",
+      "unit": "30km_spatial_block",
+      "n": 80,
+      "test": "Kruskal-Wallis",
+      "statistic": 3.4989,
+      "p_value": 0.32091,
+      "effect_size": 0.0066
+    }
+  ]
+}

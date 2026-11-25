@@ -30,3 +30,14 @@ def test_kruskal_by_group():
     res = kruskal_by_group([1, 2, 1, 10, 12, 11], ["A", "A", "A", "B", "B", "B"])
     assert res["groups"] == 2
     assert res["p_value"] < 0.06
+
+
+def test_morans_i_spatial_autocorrelation():
+    import numpy as np
+    from experiments.flarepoint_terrain_fire_study.audit.run_audit import morans_i
+
+    coords = np.array([[0.0, 0.0], [10000.0, 0.0], [20000.0, 0.0], [100000.0, 0.0], [110000.0, 0.0]])
+    vals = np.array([10.0, 10.0, 10.0, 0.0, 0.0])
+    res = morans_i(vals, coords, max_dist_m=15000.0, permutations=99)
+    assert res["morans_i"] > 0.5
+    assert res["n"] == 5

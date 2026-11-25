@@ -1,0 +1,6 @@
+analysis,unit,n,test,statistic,p_value,effect_size
+1_original_h1_15km_7classes,15km_grid_cell,293,Kruskal-Wallis,16.9609,0.009428,0.0383
+2_high_nominal_conf_15km,15km_grid_cell,293,Kruskal-Wallis,14.4747,0.024761,0.0296
+3_presence_absence_mann_whitney,15km_grid_cell,293,Mann-Whitney U,1958.0,0.071133,0.2478
+4_coarse_4_elev_bands,15km_grid_cell,293,Kruskal-Wallis,3.645,0.302433,0.0022
+5_spatial_blocks_30km,30km_spatial_block,80,Kruskal-Wallis,3.4989,0.32091,0.0066
