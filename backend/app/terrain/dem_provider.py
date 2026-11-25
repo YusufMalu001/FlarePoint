@@ -56,9 +56,9 @@ def _is_valid_geotiff(path: Path) -> bool:
     return header in (b"II*\x00", b"MM\x00*")
 
 
-def fetch_copernicus_tile(tile_id: str, cache_dir: Path = DEM_CACHE_DIR, timeout_s: float = 15.0) -> Path | None:
+def fetch_copernicus_tile(tile_id: str, cache_dir: Path = DEM_CACHE_DIR, timeout_s: float = 60.0) -> Path | None:
     """
-    Download and cache a Copernicus GLO-30 COG tile with integrity validation.
+    Download and cache a Copernicus GLO-30 COG tile with streaming & integrity validation.
     Returns local Path if valid, or None if unavailable/corrupt.
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -70,10 +70,12 @@ def fetch_copernicus_tile(tile_id: str, cache_dir: Path = DEM_CACHE_DIR, timeout
     tmp = cache_dir / f"{tile_id}.tif.part"
     try:
         with httpx.Client(timeout=timeout_s, follow_redirects=True) as client:
-            resp = client.get(url)
-            if resp.status_code != 200:
-                return None
-            tmp.write_bytes(resp.content)
+            with client.stream("GET", url) as resp:
+                if resp.status_code != 200:
+                    return None
+                with tmp.open("wb") as f:
+                    for chunk in resp.iter_bytes(chunk_size=65536):
+                        f.write(chunk)
         if not _is_valid_geotiff(tmp):
             tmp.unlink(missing_ok=True)
             return None

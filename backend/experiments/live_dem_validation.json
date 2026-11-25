@@ -1,0 +1,94 @@
+{
+  "tile_id": "Copernicus_DSM_COG_10_N36_00_E032_00_DEM",
+  "raster_metadata": {
+    "crs": "EPSG:4326",
+    "shape": [
+      3600,
+      3600
+    ],
+    "res": [
+      0.0002777777777777778,
+      0.0002777777777777778
+    ],
+    "bounds": [
+      31.999861111111112,
+      36.00013888888889,
+      32.999861111111116,
+      37.00013888888889
+    ],
+    "nodata": null,
+    "dtype": "float32"
+  },
+  "terrain": {
+    "metadata": {
+      "dataset": "Copernicus DEM GLO-30",
+      "version": "2023_1",
+      "provider": "ESA / Copernicus (AWS Open Data)",
+      "resolution_m": 30.0,
+      "vertical_datum": "EGM2008",
+      "crs": "EPSG:4326",
+      "license": "Free and open (Copernicus)",
+      "center_lat": 36.48989,
+      "center_lon": 32.22333,
+      "analysis_crs": "EPSG:32636",
+      "resampling_method": "bilinear",
+      "cell_size_m": 30.0,
+      "source_type": "REAL_DEM",
+      "is_synthetic": false,
+      "terrain_available": true,
+      "tile_ids": [
+        "Copernicus_DSM_COG_10_N36_00_E032_00_DEM"
+      ]
+    },
+    "center_point": {
+      "elevation_m": 253.1,
+      "slope_deg": 13.19,
+      "aspect_deg": 222.21,
+      "tri_m": 6.16,
+      "tpi_m": 0.13,
+      "curvature_1_per_m": -0.001061
+    },
+    "multiscale": [
+      {
+        "scale_m": 250,
+        "elev_mean_m": 252.3,
+        "elev_range_m": 121.3,
+        "slope_mean_deg": 16.19,
+        "slope_std_deg": 5.07,
+        "aspect_circ_mean_deg": 209.22,
+        "tri_mean_m": 8.29,
+        "tpi_mean_m": -0.21
+      },
+      {
+        "scale_m": 500,
+        "elev_mean_m": 256.1,
+        "elev_range_m": 153.3,
+        "slope_mean_deg": 16.78,
+        "slope_std_deg": 5.25,
+        "aspect_circ_mean_deg": 164.16,
+        "tri_mean_m": 8.5,
+        "tpi_mean_m": 0.2
+      },
+      {
+        "scale_m": 1000,
+        "elev_mean_m": 258.0,
+        "elev_range_m": 228.5,
+        "slope_mean_deg": 16.61,
+        "slope_std_deg": 5.56,
+        "aspect_circ_mean_deg": 144.9,
+        "tri_mean_m": 8.49,
+        "tpi_mean_m": -0.03
+      },
+      {
+        "scale_m": 3000,
+        "elev_mean_m": 402.8,
+        "elev_range_m": 966.2,
+        "slope_mean_deg": 19.48,
+        "slope_std_deg": 7.06,
+        "aspect_circ_mean_deg": 152.28,
+        "tri_mean_m": 9.91,
+        "tpi_mean_m": -0.02
+      }
+    ]
+  }
+}
