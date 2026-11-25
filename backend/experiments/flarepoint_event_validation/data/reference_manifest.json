@@ -1,0 +1,8 @@
+{
+  "source_name": "NIFC WFIGS Interagency Fire Perimeters (2024)",
+  "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters/FeatureServer/0/query",
+  "retrieved_at": "2026-11-25T08:41:21.960259+00:00",
+  "crs": "EPSG:4326",
+  "features_valid": 25,
+  "features_invalid_skipped": 0
+}
