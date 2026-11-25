@@ -15,12 +15,17 @@ def extract_multiscale_terrain(
     lon: float,
     scales_m: tuple[int, ...] = (250, 500, 1000, 3000),
     cell_size_m: float = 30.0,
+    strict_real_data: bool = False,
 ) -> dict:
     """
     Phase C & D: Extract terrain derivatives and multi-scale neighborhood statistics.
     """
     max_r = max(scales_m) + 120
-    dem, meta = load_dem_patch(lat, lon, radius_m=max_r, cell_size_m=cell_size_m)
+    dem, meta = load_dem_patch(
+        lat, lon, radius_m=max_r, cell_size_m=cell_size_m, strict_real_data=strict_real_data
+    )
+    if dem is None:
+        return {"metadata": meta, "center_point": None, "multiscale": []}
     slope, aspect = compute_slope_aspect_horn(dem, cell_size_m=cell_size_m)
     tri = compute_tri(dem)
     tpi = compute_tpi(dem)

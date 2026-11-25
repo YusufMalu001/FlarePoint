@@ -84,6 +84,23 @@ def test_multiscale_extraction_and_progression_classification():
     assert classify_terrain_relative_displacement(0.01, 0.0, 0.0, 15.0, 180.0) == "indeterminate"
 
 
+def test_hand_calculated_tri_tpi_curvature_and_nonsquare():
+    # 3x3 ridge: center=10, all 8 neighbors=2 => TPI = 8.0, TRI = 8.0
+    dem_ridge = np.full((3, 3), 2.0)
+    dem_ridge[1, 1] = 10.0
+    assert np.isclose(compute_tpi(dem_ridge)[1, 1], 8.0)
+    assert np.isclose(compute_tri(dem_ridge)[1, 1], 8.0)
+    # Laplacian curvature at center with 10m spacing: d2x = (2-20+2)/100 = -0.16, d2y = -0.16 => -0.32
+    assert np.isclose(compute_curvature(dem_ridge, cell_size_m=10.0)[1, 1], -0.32)
+
+    # Non-square pixel spacing (dx=30m, dy=60m)
+    y, x = np.mgrid[0:5, 0:5]
+    dem_ns = 100.0 - 60.0 * y  # 60m drop per 60m y-cell => 45 deg South
+    slope_ns, aspect_ns = compute_slope_aspect_horn(dem_ns, cell_size_m=30.0, cell_size_y_m=60.0)
+    assert np.isclose(slope_ns[2, 2], 45.0, atol=0.1)
+    assert np.isclose(aspect_ns[2, 2], 180.0, atol=0.1)
+
+
 def test_terrain_api_endpoints():
     with TestClient(app) as client:
         src = client.get("/api/v1/terrain/sources")

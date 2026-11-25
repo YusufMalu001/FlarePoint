@@ -54,6 +54,21 @@ def analyze_incident_progression(snapshots: Sequence[IncidentSnapshotModel]) -> 
 
         t_prev = extract_multiscale_terrain(prev.centroid_lat, prev.centroid_lon, scales_m=(250,))
         t_curr = extract_multiscale_terrain(curr.centroid_lat, curr.centroid_lon, scales_m=(250,))
+        if t_prev["center_point"] is None or t_curr["center_point"] is None:
+            transitions.append(
+                {
+                    "from_window": prev.window_start.isoformat(),
+                    "to_window": curr.window_start.isoformat(),
+                    "displacement_km": round(dist_km, 3),
+                    "bearing_deg": round(bearing, 1),
+                    "elapsed_hours": round(elapsed_h, 1),
+                    "elevation_delta_m": None,
+                    "classification": "indeterminate",
+                    "quality_flags": ["DEM_UNAVAILABLE"],
+                }
+            )
+            continue
+
         elev_delta = round(
             t_curr["center_point"]["elevation_m"] - t_prev["center_point"]["elevation_m"], 1
         )

@@ -3,12 +3,13 @@ import numpy as np
 
 
 def compute_slope_aspect_horn(
-    dem: np.ndarray, cell_size_m: float = 30.0
+    dem: np.ndarray, cell_size_m: float = 30.0, cell_size_y_m: float | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Horn's (1981) 3x3 finite-difference slope (degrees) and aspect (degrees, 0=N, 90=E).
-    Edges and cells adjacent to NaN are returned as NaN.
+    Supports non-square pixels via cell_size_y_m. Edges and NaN neighbors are NaN.
     """
+    dy_m = cell_size_y_m if cell_size_y_m is not None else cell_size_m
     z = dem.astype(float)
     slope = np.full_like(z, np.nan)
     aspect = np.full_like(z, np.nan)
@@ -21,7 +22,7 @@ def compute_slope_aspect_horn(
     dz_dy = (
         (z[2:, :-2] + 2.0 * z[2:, 1:-1] + z[2:, 2:])
         - (z[:-2, :-2] + 2.0 * z[:-2, 1:-1] + z[:-2, 2:])
-    ) / (8.0 * cell_size_m)
+    ) / (8.0 * dy_m)
 
     grad = np.hypot(dz_dx, dz_dy)
     slope[1:-1, 1:-1] = np.degrees(np.arctan(grad))
@@ -64,12 +65,15 @@ def compute_tpi(dem: np.ndarray) -> np.ndarray:
     return tpi
 
 
-def compute_curvature(dem: np.ndarray, cell_size_m: float = 30.0) -> np.ndarray:
+def compute_curvature(
+    dem: np.ndarray, cell_size_m: float = 30.0, cell_size_y_m: float | None = None
+) -> np.ndarray:
     """Laplacian curvature (1/m): positive = convex/ridge, negative = concave/valley."""
+    dy_m = cell_size_y_m if cell_size_y_m is not None else cell_size_m
     z = dem.astype(float)
     curv = np.full_like(z, np.nan)
     d2x = (z[1:-1, 2:] - 2.0 * z[1:-1, 1:-1] + z[1:-1, :-2]) / (cell_size_m ** 2)
-    d2y = (z[2:, 1:-1] - 2.0 * z[1:-1, 1:-1] + z[:-2, 1:-1]) / (cell_size_m ** 2)
+    d2y = (z[2:, 1:-1] - 2.0 * z[1:-1, 1:-1] + z[:-2, 1:-1]) / (dy_m ** 2)
     curv[1:-1, 1:-1] = d2x + d2y
     return curv
 
